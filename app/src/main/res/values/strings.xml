@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Sensor</string>
+    <string name="textview">FFT will be shown once sample size is reached</string>
 </resources>

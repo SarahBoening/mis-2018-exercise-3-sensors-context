@@ -1,21 +1,68 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout android:id="@+id/RelativeLayout01"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+<RelativeLayout android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_alignParentStart="true"
+    android:layout_alignParentTop="true"
+    android:orientation="vertical"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-<com.jjoe64.graphview.GraphView
-    android:id="@+id/graphViewAcc"
-    android:layout_height="200dp"
-    android:layout_width="fill_parent"
-    />
+
+    <com.jjoe64.graphview.GraphView
+        android:id="@+id/graphViewAcc"
+        android:layout_width="fill_parent"
+        android:layout_height="200dp" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/graphViewAcc"
+        android:layout_alignParentLeft="true"
+        android:text="@string/textview" />
 
     <com.jjoe64.graphview.GraphView
         android:id="@+id/graphViewFFT"
         android:layout_width="fill_parent"
         android:layout_height="200dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginBottom="62dp" />
+        android:layout_below="@id/textView"/>
+
+    <SeekBar
+        android:id="@+id/seekbarSample"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/graphViewFFT"
+        android:layout_alignParentLeft="true"
+        android:thumbTint="@color/colorPrimaryDark"/>
+
+    <TextView
+        android:id="@+id/textViewSample"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/seekbarSample"
+        android:layout_alignParentLeft="true"
+        android:text="" />
+
+    <SeekBar
+        android:id="@+id/seekbarWindow"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/textViewSample"
+        android:layout_alignParentLeft="true" />
+
+    <TextView
+        android:id="@+id/textViewWindow"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/seekbarWindow"
+        android:layout_alignParentLeft="true"
+        android:text="" />
+
+    <TextView
+        android:id="@+id/textViewSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/textViewWindow"
+        android:layout_centerInParent="true"
+        android:text=""/>
 
 </RelativeLayout>
+
