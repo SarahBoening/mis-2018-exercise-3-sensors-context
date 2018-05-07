@@ -16,8 +16,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/graphViewAcc"
-        android:layout_alignParentLeft="true"
-        android:text="@string/textview" />
+        android:layout_centerInParent="true"
+        android:text="@string/textFFT" />
 
     <com.jjoe64.graphview.GraphView
         android:id="@+id/graphViewFFT"
@@ -25,21 +25,27 @@
         android:layout_height="200dp"
         android:layout_below="@id/textView"/>
 
+    <TextView
+        android:id="@+id/Temp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/graphViewFFT"
+        android:layout_centerInParent="true"
+        android:text="@string/TempInit"/>
     <SeekBar
         android:id="@+id/seekbarSample"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/graphViewFFT"
-        android:layout_alignParentLeft="true"
-        android:thumbTint="@color/colorPrimaryDark"/>
+        android:layout_alignParentLeft="true" />
 
     <TextView
         android:id="@+id/textViewSample"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/seekbarSample"
-        android:layout_alignParentLeft="true"
-        android:text="" />
+        android:layout_centerInParent="true"
+        android:text="@string/SampleInit" />
 
     <SeekBar
         android:id="@+id/seekbarWindow"
@@ -50,11 +56,11 @@
 
     <TextView
         android:id="@+id/textViewWindow"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/seekbarWindow"
-        android:layout_alignParentLeft="true"
-        android:text="" />
+        android:layout_centerInParent="true"
+        android:text="@string/WindowInit" />
 
     <TextView
         android:id="@+id/textViewSpeed"
@@ -62,7 +68,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/textViewWindow"
         android:layout_centerInParent="true"
-        android:text=""/>
+        android:text="@string/initSpeed"/>
 
 </RelativeLayout>
 
