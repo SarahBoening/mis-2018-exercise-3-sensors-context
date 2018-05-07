@@ -3,8 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/mis-2018-exercise-3-sensors-context.iml" filepath="$PROJECT_DIR$/.idea/mis-2018-exercise-3-sensors-context.iml" />
       <module fileurl="file://$PROJECT_DIR$/mis-2018-exercise-3-sensors-context.iml" filepath="$PROJECT_DIR$/mis-2018-exercise-3-sensors-context.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/mis-2018-exercise-3-sensors-context.iml" filepath="$PROJECT_DIR$/.idea/mis-2018-exercise-3-sensors-context.iml" />
     </modules>
   </component>
 </project>

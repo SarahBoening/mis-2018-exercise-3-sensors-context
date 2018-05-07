@@ -42,7 +42,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int sample = 0;
     private SensorManager sensorManager;
     private Sensor sensor;
-    double time;
     List<Double> magValues = new ArrayList<>();
     LineGraphSeries<DataPoint> lineX, lineY, lineZ, lineMag;
     GraphView graphViewAcc, graphViewFFT;
@@ -54,40 +53,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     MediaPlayer musicPlayerBike;
     MediaPlayer musicPlayerJog;
 
-    double maxFreq = 0.00;
 
     LocationManager locationManager;
     double locationSpeed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         textTemp = findViewById(R.id.Temp);
         initSeekBars();
-
-        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-        if (sensor == null) {
-            makeErrorLog("Accelerometer not available");
-        } else {
-            sensorManager.registerListener(this, sensor, SAMPLE_RATE);
-            initAccGraph();
-            initFFTGraph();
-            textSpeed = findViewById(R.id.textViewSpeed);
-            musicPlayerBike = MediaPlayer.create(this, R.raw.coldfunk);
-            musicPlayerBike.setLooping(true);
-            musicPlayerJog = MediaPlayer.create(this, R.raw.music);
-            musicPlayerJog.setLooping(true);
-            locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                makeErrorLog("No permission for GPS");
-            } else{
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-            this.onLocationChanged(null);
-            }
-        }
+        initSensors();
+        initAccGraph();
+        initFFTGraph();
+        initMusicPlayer();
+        initLocation();
 
     }
 
@@ -98,16 +80,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public final void onSensorChanged(SensorEvent event) {
+
         double mag = magnitude(event.values[0], event.values[1], event.values[2]);
         magValues.add(mag);
         sample++;
         updateGraph(sample, event.values[0], event.values[1], event.values[2], mag);
 
-
     }
 
     @Override
     protected void onResume() {
+
         super.onResume();
         sensorManager.registerListener(this, sensor, SAMPLE_RATE);
         musicPlayerJog = MediaPlayer.create(this, R.raw.coldfunk);
@@ -116,14 +99,49 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     protected void onPause() {
+
         super.onPause();
-        musicPlayerJog.stop();
-        musicPlayerBike.stop();
+        if (musicPlayerJog.isPlaying())
+            musicPlayerJog.stop();
+        if (musicPlayerBike.isPlaying())
+            musicPlayerBike.stop();
         musicPlayerBike.release();
         musicPlayerJog.release();
         sensorManager.unregisterListener(this);
     }
 
+
+    private void initSensors(){
+
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        if (sensorManager != null)
+            sensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+        else
+            makeErrorLog("SensorManager not available");
+        if (sensor == null)
+            makeErrorLog("Accelerometer not available");
+        else
+            sensorManager.registerListener(this, sensor, SAMPLE_RATE);
+    }
+
+    private void initMusicPlayer(){
+
+        musicPlayerBike = MediaPlayer.create(this, R.raw.coldfunk);
+        musicPlayerBike.setLooping(true);
+        musicPlayerJog = MediaPlayer.create(this, R.raw.music);
+        musicPlayerJog.setLooping(true);
+    }
+
+    private void initLocation(){
+        textSpeed = findViewById(R.id.textViewSpeed);
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+            makeErrorLog("No permission for GPS");
+        else
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+        this.onLocationChanged(null);
+
+    }
 
     // http://www.android-graphview.org/
     private void initAccGraph() {
@@ -191,10 +209,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void updateFFTGraphAxis() {
+
         graphViewFFT.getViewport().setMaxX(wsize + 5);
     }
 
     private void initSeekBars() {
+
         seekbarSample = findViewById(R.id.seekbarSample);
         seekbarSample.setMax(1000000);
         seekbarSample.setProgress(0);
@@ -212,7 +232,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 // https://stackoverflow.com/questions/7329166/changing-step-values-in-seekbar
                 progress /= 10000;
                 progress *= 10000;
-                String text = "Sample size: " + progress + " ms";
+                String text = "Sample rate: " + progress + " ms";
                 textSample.setText(text);
             }
 
@@ -276,24 +296,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void updateSampleRate(int rate){
+
         sensorManager.unregisterListener(this);
         sensorManager.registerListener(this, sensor, rate);
     }
     private void getFFTData() {
 
-        Double[] FFTvalues = magValues.toArray(new Double[magValues.size()]);
-        if (FFTvalues.length >= sampleSize)
-            new FFTAsynctask(wsize).execute(ArrayUtils.toPrimitive(FFTvalues));
-        if (FFTvalues.length > sampleSize)
+        Double[] FFTValues = magValues.toArray(new Double[magValues.size()]);
+        if (FFTValues.length >= sampleSize)
+            new FFTAsynctask(wsize).execute(ArrayUtils.toPrimitive(FFTValues));
+        if (FFTValues.length > sampleSize)
             magValues.clear();
     }
 
     // https://stackoverflow.com/questions/33215733/graphview-shows-wrong-graph-in-real-time-mode-when-scrolltoend-is-true
     private void updateGraph(final int sample, final double x, final double y, final double z, final double mag) {
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                //magValues.add(mag);
+
                 getFFTData();
                 lineX.appendData(new DataPoint(sample, x), true, 1000);
                 lineY.appendData(new DataPoint(sample, y), true, 1000);
@@ -313,7 +335,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         } else {
             // m/s -> km/h
             locationSpeed = location.getSpeed()*3.6;
-            textSpeed.setText("Current speed: " + locationSpeed + " km/h");
+            textSpeed.setText("Current speed: " + String.format("%2f", locationSpeed) + " km/h");
         }
 
     }
@@ -374,6 +396,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         @Override
         protected void onPostExecute(double[] values) {
+
             //hand over values to global variable after background task is finished
             freqCounts = values;
             updateFFTGraph();
@@ -395,47 +418,51 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         graphViewFFT.getLegendRenderer().setAlign(LegendRenderer.LegendAlign.TOP);
     }
 
-    private void changeMusicBySpeed(){
+    private void changeMusicBySpeed() {
+
         double temp = 0.00;
-        for (int i = 1; i < freqCounts.length; i++){
-            if(freqCounts[i] >= temp)
+        for (int i = 1; i < freqCounts.length; i++) {
+            if (freqCounts[i] >= temp)
                 temp = freqCounts[i];
         }
-        textTemp.setText("Current temp: " + temp);
+        textTemp.setText("Current temp: " + String.format("%2f", temp));
 
         // change moving behaviour to standing/sitting still
-        if(temp < 20.00){
-            if(locationSpeed < 1.00) {
+        // See README.txt for more information
+        if (temp < 20.00) {
+            if (locationSpeed < 1.00) {
                 // no music playing
                 if (musicPlayerJog.isPlaying())
                     musicPlayerJog.pause();
                 if (musicPlayerBike.isPlaying())
                     musicPlayerBike.pause();
-                maxFreq = temp;
+            }
+            // bus/car no real movement of phone
+            if (locationSpeed > 25.00) {
+                if (musicPlayerJog.isPlaying())
+                    musicPlayerJog.pause();
+                if (musicPlayerBike.isPlaying())
+                    musicPlayerBike.pause();
             }
         }
-        //Change in the moving behaviour to walking/jogging
-        if (temp > 20.00 && temp < 1000.00) {
-           // if (locationSpeed >= 1.00 && locationSpeed <= 13.00) {
+        //Change in the moving behaviour
+        if (temp > 20.00) {
+            // Walking/Jogging
+            if (locationSpeed >= 1.00 && locationSpeed <= 13.00) {
                 if (musicPlayerBike.isPlaying())
                     musicPlayerBike.pause();
                 if (!musicPlayerJog.isPlaying())
                     musicPlayerJog.start();
-                maxFreq = temp;
-          //  }
-        }
-        // Change moving behaviour to riding a bike
-        if (temp > 10000.00) {
+            }
+
+            // Riding a bike
             if (locationSpeed >= 14.00 && locationSpeed <= 25.00) {
                 if (musicPlayerJog.isPlaying())
                     musicPlayerJog.pause();
                 if (musicPlayerBike.isPlaying())
                     musicPlayerBike.pause();
-                maxFreq = temp;
             }
-        }
-        //Change moving behaviour to bus/car
-        if (temp > 10000) {
+            // Double check if moving in bus/car since there might be a lot of moving of the device (e.g. bumpy roads)
             if (locationSpeed > 25.00) {
                 if (musicPlayerJog.isPlaying())
                     musicPlayerJog.pause();
@@ -446,11 +473,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private float magnitude(float x, float y, float z) {
+
         return (float) Math.sqrt(Math.pow(x,2) + Math.pow(y,2) + Math.pow(z,2));
     }
 
     // Simple function to display and log errors/exceptions
     public void makeErrorLog(String error) {
+
         Log.e("MainActivity", error);
         Toast.makeText(MainActivity.this, error, Toast.LENGTH_SHORT).show();
     }
