@@ -4,5 +4,4 @@
     <string name="initSpeed">Current speed: 0 km/h</string>
     <string name="SampleInit">Sample rate: 20000 ms</string>
     <string name="WindowInit">Window size: 64</string>
-    <string name="TempInit">Current temp: 0.00</string>
 </resources>

@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     List<Double> magValues = new ArrayList<>();
     LineGraphSeries<DataPoint> lineX, lineY, lineZ, lineMag;
     GraphView graphViewAcc, graphViewFFT;
-    TextView textWindow, textSample, textSpeed, textTemp;
+    TextView textWindow, textSample, textSpeed;
     SeekBar seekbarSample, seekbarWindow;
 
     int SAMPLE_RATE = 20000;
@@ -63,7 +63,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        textTemp = findViewById(R.id.Temp);
         initSeekBars();
         initSensors();
         initAccGraph();
@@ -330,12 +329,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onLocationChanged(Location location) {
 
         if(location == null){
-            textSpeed.setText("Current speed: 0,00 km/h");
+            textSpeed.setText("Current speed: 0.0 km/h");
             locationSpeed = 0.00;
         } else {
             // m/s -> km/h
             locationSpeed = location.getSpeed()*3.6;
-            textSpeed.setText("Current speed: " + String.format("%2f", locationSpeed) + " km/h");
+            textSpeed.setText("Current speed: " + String.format("{0:0.#}", locationSpeed) + " km/h");
         }
 
     }
@@ -425,7 +424,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             if (freqCounts[i] >= temp)
                 temp = freqCounts[i];
         }
-        textTemp.setText("Current temp: " + String.format("%2f", temp));
 
         // change moving behaviour to standing/sitting still
         // See README.txt for more information
