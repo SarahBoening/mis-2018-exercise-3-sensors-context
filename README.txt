@@ -5,8 +5,11 @@ Thresholds via Location.getSpeed:
 - no movement: <1 km/h
 - bus/car: > 25 km/h 
 
+Thresholds for FFT data:
+- by using the app from 3a, one could see that when the device is not moving the peek of the FFT is always below 20, mostly in between 0,2 and 10. Since the device can be moved simply by adjusting one's seeting position (meaning a person is not walking) a walking movement should give a FFT peek at above 20.
+
 Determining frequency changes:
-- after FFT search for highest Frequency
+- after FFT search for highest frequency
 - if this is significantly bigger/smaller then the old maxFreq => check with Location.getSpeed => change music player state if necessary
 
 
