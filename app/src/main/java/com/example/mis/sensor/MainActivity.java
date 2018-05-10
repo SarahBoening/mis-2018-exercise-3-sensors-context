@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // initialization of all components
         initSeekBars();
         initSensors();
         initAccGraph();
@@ -132,6 +133,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void initLocation(){
+        
         textSpeed = findViewById(R.id.textViewSpeed);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
@@ -146,8 +148,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void initAccGraph() {
 
         graphViewAcc = findViewById(R.id.graphViewAcc);
-
-        // Set to gray in order to see the white line
+        
         graphViewAcc.setBackgroundColor(Color.WHITE);
 
         lineX = new LineGraphSeries<>();
@@ -158,6 +159,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         lineX.setColor(Color.RED);
         lineY.setColor(Color.GREEN);
         lineZ.setColor(Color.BLUE);
+         // Set to gray in order to see it better
         lineMag.setColor(Color.GRAY);
 
         graphViewAcc.addSeries(lineX);
@@ -168,13 +170,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         graphViewAcc.getGridLabelRenderer().setHorizontalAxisTitle("Sample");
         graphViewAcc.getGridLabelRenderer().setVerticalAxisTitle("Acceleration");
         graphViewAcc.getGridLabelRenderer().setHorizontalLabelsVisible(true);
-
+        
+        // add legend
         lineX.setTitle("x-axis");
         lineY.setTitle("y-axis");
         lineZ.setTitle("z-axis");
         lineMag.setTitle("Magnitude");
         graphViewAcc.getLegendRenderer().setVisible(true);
         graphViewAcc.getLegendRenderer().setAlign(LegendRenderer.LegendAlign.TOP);
+       
+        // set axes
         graphViewAcc.getViewport().setScalable(true);
         graphViewAcc.getViewport().setScalableY(true);
         graphViewAcc.getViewport().setScrollableY(true);
@@ -299,8 +304,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager.unregisterListener(this);
         sensorManager.registerListener(this, sensor, rate);
     }
+    
     private void getFFTData() {
 
+        // Array needs to be of the size of wsize for FFT, so we need to wait for it to fill
+        // If wsize is reached, start FFT
+        // If it's bigger then wsize, fill again
         Double[] FFTValues = magValues.toArray(new Double[magValues.size()]);
         if (FFTValues.length >= sampleSize)
             new FFTAsynctask(wsize).execute(ArrayUtils.toPrimitive(FFTValues));
@@ -405,6 +414,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void updateFFTGraph(){
 
+        // Draw line graph for FFT results
         DataPoint[] dataPoints = new DataPoint[freqCounts.length - 1];
         for (int i = 0; i < freqCounts.length - 1; i++)
             dataPoints[i] = new DataPoint(i, freqCounts[i + 1]);
@@ -443,6 +453,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     musicPlayerBike.pause();
             }
         }
+        
         //Change in the moving behaviour
         if (temp > 20.00) {
             // Walking/Jogging
