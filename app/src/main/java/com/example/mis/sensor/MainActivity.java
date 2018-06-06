@@ -12,7 +12,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,15 +35,18 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.String.format;
+
 public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener {
 
     private double[] freqCounts;
 
-    private int wsize = 64;
+    private int windowSize = 64;
     private int sampleSize = 64;
     private int sample = 0;
     private SensorManager sensorManager;
     private Sensor sensor;
+
     List<Double> magValues = new ArrayList<>();
     LineGraphSeries<DataPoint> lineX, lineY, lineZ, lineMag;
     GraphView graphViewAcc, graphViewFFT;
@@ -57,6 +62,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     LocationManager locationManager;
     double locationSpeed;
 
+    private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
+    private static final String COURSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
+    private Boolean mLocationPermissionsGranted = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -69,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         initAccGraph();
         initFFTGraph();
         initMusicPlayer();
+        getLocationPermission();
         initLocation();
 
     }
@@ -110,6 +121,48 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager.unregisterListener(this);
     }
 
+    //Location permission on runtime
+    private void getLocationPermission() {
+        String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION};
+
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                    COURSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                mLocationPermissionsGranted = true;
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        permissions,
+                        LOCATION_PERMISSION_REQUEST_CODE);
+            }
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    permissions,
+                    LOCATION_PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        mLocationPermissionsGranted = false;
+
+        switch (requestCode) {
+            case LOCATION_PERMISSION_REQUEST_CODE: {
+                if (grantResults.length > 0) {
+                    for (int i = 0; i < grantResults.length; i++) {
+                        if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                            mLocationPermissionsGranted = false;
+                            textSpeed.setText("Current speed: no permission granted");
+                            makeErrorLog("Location permission denied");
+                            return;
+                        }
+                    }
+                    mLocationPermissionsGranted = true;
+                }
+            }
+        }
+    }
 
     private void initSensors(){
 
@@ -136,13 +189,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         
         textSpeed = findViewById(R.id.textViewSpeed);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-            makeErrorLog("No permission for GPS");
-        else
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-        this.onLocationChanged(null);
-
-    }
+        if (mLocationPermissionsGranted) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                makeErrorLog("No permission for GPS");
+                this.onLocationChanged(null);
+                textSpeed.setText("Current speed: no permission granted");
+            } else {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+            }
+        }
+     }
 
     // http://www.android-graphview.org/
     private void initAccGraph() {
@@ -188,7 +246,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         graphViewAcc.getViewport().setMinX(0);
         graphViewAcc.getViewport().setMaxX(sampleSize);
 
-
     }
 
     private void initFFTGraph() {
@@ -208,13 +265,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         graphViewFFT.getViewport().setXAxisBoundsManual(true);
         graphViewFFT.getViewport().setMinX(0);
-        graphViewFFT.getViewport().setMaxX(wsize + 5);
+        graphViewFFT.getViewport().setMaxX(windowSize + 5);
 
     }
 
     private void updateFFTGraphAxis() {
 
-        graphViewFFT.getViewport().setMaxX(wsize + 5);
+        graphViewFFT.getViewport().setMaxX(windowSize + 5);
     }
 
     private void initSeekBars() {
@@ -263,6 +320,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         seekbarWindow.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (progress <= 64)
+                    progress = 64;
+                else if (progress <= 128)
+                    progress = 128;
+                else if (progress <= 256)
+                    progress = 256;
+                else if (progress <= 512)
+                    progress = 512;
+                else if (progress <= 1024)
+                    progress = 1024;
+                else
+                    progress = 1024;
                 String text = "Window size: " + progress;
                 textWindow.setText(text);
 
@@ -293,7 +362,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 seekBar.setProgress(progress);
                 String text = "Window size: " + progress;
                 textWindow.setText(text);
-                wsize = progress;
+                windowSize = progress;
                 updateFFTGraphAxis();
             }
         });
@@ -307,44 +376,43 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     
     private void getFFTData() {
 
-        // Array needs to be of the size of wsize for FFT, so we need to wait for it to fill
-        // If wsize is reached, start FFT
-        // If it's bigger then wsize, fill again
+        // Array needs to be of the size of windowSize for FFT, so we need to wait for it to fill
+        // If windowSize is reached, start FFT
+        // If it's bigger then windowSize, fill again
         Double[] FFTValues = magValues.toArray(new Double[magValues.size()]);
-        if (FFTValues.length >= sampleSize)
-            new FFTAsynctask(wsize).execute(ArrayUtils.toPrimitive(FFTValues));
-        if (FFTValues.length > sampleSize)
+        if(FFTValues.length == windowSize)
+            new FFTAsynctask(windowSize).execute(ArrayUtils.toPrimitive(FFTValues));
+
+        if (FFTValues.length > windowSize)
             magValues.clear();
     }
 
-    // https://stackoverflow.com/questions/33215733/graphview-shows-wrong-graph-in-real-time-mode-when-scrolltoend-is-true
+    // Got rid of the thread since it caused crashes, new solution: http://jjoe64.github.io/GraphView/javadoc/com/jjoe64/graphview/GraphView.html#onDataChanged-boolean-boolean-
     private void updateGraph(final int sample, final double x, final double y, final double z, final double mag) {
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-                getFFTData();
                 lineX.appendData(new DataPoint(sample, x), true, 1000);
                 lineY.appendData(new DataPoint(sample, y), true, 1000);
                 lineZ.appendData(new DataPoint(sample, z), true, 1000);
                 lineMag.appendData(new DataPoint(sample, mag), true, 1000);
+                graphViewAcc.onDataChanged(true, true);
+                getFFTData();
             }
-        });
 
-    }
 
     @Override
     public void onLocationChanged(Location location) {
-
-        if(location == null){
-            textSpeed.setText("Current speed: 0.0 km/h");
-            locationSpeed = 0.00;
-        } else {
-            // m/s -> km/h
-            locationSpeed = location.getSpeed()*3.6;
-            textSpeed.setText("Current speed: " + String.format("{0:0.#}", locationSpeed) + " km/h");
-        }
+        if (mLocationPermissionsGranted) {
+            if (location == null) {
+                textSpeed.setText("Current speed: 0.0 km/h");
+                locationSpeed = 0.00;
+            } else {
+                // m/s -> km/h
+                locationSpeed = location.getSpeed() * 3.6;
+                String speedString = format("%.1f", locationSpeed);
+                textSpeed.setText("Current speed: " + speedString + " km/h");
+            }
+        } else
+            textSpeed.setText("Current speed: no permission granted");
 
     }
 
@@ -381,21 +449,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         protected double[] doInBackground(double[]... values) {
 
             double[] realPart = values[0].clone(); // actual acceleration values
-            double[] imagPart = new double[wsize]; // init empty
+            double[] imagPart = new double[this.wsize]; // init empty
 
 
-            /**
+            /*
              * Init the FFT class with given window size and run it with your input.
              * The fft() function overrides the realPart and imagPart arrays!
              */
-            FFT fft = new FFT(wsize);
-            fft.fft(realPart, imagPart);
+                FFT fft = new FFT(this.wsize);
+                fft.fft(realPart, imagPart);
 
             //init new double array for magnitude (e.g. frequency count)
-            double[] magnitude = new double[wsize];
+            double[] magnitude = new double[this.wsize];
 
             //fill array with magnitude values of the distribution
-            for (int i = 0; wsize > i; i++) {
+            for (int i = 0; this.wsize > i; i++) {
                 magnitude[i] = Math.sqrt(Math.pow(realPart[i], 2) + Math.pow(imagPart[i], 2));
             }
             return magnitude;
@@ -438,7 +506,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // change moving behaviour to standing/sitting still
         // See README.txt for more information
         if (temp < 20.00) {
-            if (locationSpeed < 1.00) {
+            if (locationSpeed < 1.00 || !mLocationPermissionsGranted) {
                 // no music playing
                 if (musicPlayerJog.isPlaying())
                     musicPlayerJog.pause();
@@ -446,7 +514,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     musicPlayerBike.pause();
             }
             // bus/car no real movement of phone
-            if (locationSpeed > 25.00) {
+            else if (locationSpeed > 25.00) {
                 if (musicPlayerJog.isPlaying())
                     musicPlayerJog.pause();
                 if (musicPlayerBike.isPlaying())
@@ -457,7 +525,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //Change in the moving behaviour
         if (temp > 20.00) {
             // Walking/Jogging
-            if (locationSpeed >= 1.00 && locationSpeed <= 13.00) {
+            if (locationSpeed >= 1.00 && locationSpeed <= 13.00 || !mLocationPermissionsGranted) {
                 if (musicPlayerBike.isPlaying())
                     musicPlayerBike.pause();
                 if (!musicPlayerJog.isPlaying())
@@ -465,14 +533,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
 
             // Riding a bike
-            if (locationSpeed >= 14.00 && locationSpeed <= 25.00) {
+           else if (locationSpeed >= 14.00 && locationSpeed <= 25.00) {
                 if (musicPlayerJog.isPlaying())
                     musicPlayerJog.pause();
                 if (musicPlayerBike.isPlaying())
                     musicPlayerBike.pause();
             }
             // Double check if moving in bus/car since there might be a lot of moving of the device (e.g. bumpy roads)
-            if (locationSpeed > 25.00) {
+           else if (locationSpeed > 25.00) {
                 if (musicPlayerJog.isPlaying())
                     musicPlayerJog.pause();
                 if (musicPlayerBike.isPlaying())
